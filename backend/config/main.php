@@ -9,8 +9,8 @@ $params = array_merge(
 return [
     'id' => 'app-backend',
     'basePath' => dirname(__DIR__),
-    'controllerNamespace' => 'backend\controllers',
     'bootstrap' => ['log'],
+    'controllerNamespace' => 'backend\controllers',
     'modules' => [],
     'components' => [
         'user' => [
@@ -28,6 +28,9 @@ return [
         ],
         'errorHandler' => [
             'errorAction' => 'site/error',
+        ],
+        'authManager' => [
+            'class' => 'yii\rbac\DbManager',
         ],
     ],
     'params' => $params,

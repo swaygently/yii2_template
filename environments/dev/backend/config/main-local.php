@@ -15,7 +15,18 @@ if (!YII_ENV_TEST) {
     $config['modules']['debug'] = 'yii\debug\Module';
 
     $config['bootstrap'][] = 'gii';
-    $config['modules']['gii'] = 'yii\gii\Module';
+    $config['modules']['gii'] = [
+        'class' => 'yii\gii\Module',
+        'allowedIPs' => ['127.0.0.1', '::1', '192.168.8.1'],
+        'generators' => [
+            'sintret' => [
+                'class' => 'sintret\gii\generators\crud\Generator',
+            ],
+            'sintretModel' => [
+                'class' => 'sintret\gii\generators\model\Generator'
+            ]
+        ]
+    ];
 }
 
 return $config;
