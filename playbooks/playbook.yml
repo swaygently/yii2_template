@@ -1,0 +1,87 @@
+- hosts: all
+  gather_facts: yes
+
+  vars_files:
+    - vars/main.yml
+
+  tasks:
+    # common enviroment
+    - name: set timezone
+      shell: timedatectl set-timezone Asia/Shanghai
+
+    - name: disable selinux
+      selinux: state=disabled
+
+    - name: stop firewalld
+      service: name=firewalld enabled=no state=stopped
+
+    - name: install epel repo
+      yum: name=epel-release state=present
+
+    - name: install git
+      yum: name=git state=present
+
+    - name: install httpd
+      yum: name=httpd state=present
+
+    - name: install php
+      yum: name={{item}} state=present
+      with_items:
+        - php
+        - php-mcrypt
+        - php-gd
+        - php-pdo
+        - php-mysqlnd
+        - php-pecl-event
+        - php-pecl-memcached
+      notify: restart httpd
+
+    - name: check composer
+      command: /usr/local/bin/composer --version
+      register: result_check_composer
+      ignore_errors: True
+
+    - name: install composer
+      shell: "{{ item }}"
+      with_items:
+        - curl -sS https://getcomposer.org/installer | php
+        - mv composer.phar /usr/local/bin/composer
+        - /usr/local/bin/composer global require "fxp/composer-asset-plugin:1.0.0"
+      when: result_check_composer|failed
+
+    - name: install mariadb server
+      yum: name=mariadb-server state=present
+      notify: restart mariadb
+
+    - name: install phpMyAdmin
+      yum: name=phpMyAdmin state=present
+
+    - name: configure phpMyAdmin
+      template: src=templates/phpMyAdmin.conf dest=/etc/httpd/conf.d/
+      notify:
+        - restart mariadb
+        - restart httpd
+
+    - name: create database
+      shell: mysql -uroot -e'{{ item }}'
+      with_items:
+        - create database if not exists `{{ db_name }}` default character set utf8;
+        - grant all privileges on `{{ db_name }}`.* to {{ db_user }}@localhost identified by "{{ db_pass }}"; flush privileges;
+
+    # application
+    - name: configure app web
+      template: src=templates/yii.conf.j2 dest=/etc/httpd/conf.d/yii.conf
+      notify: restart httpd
+
+    #- name: configure app assets dir
+    #raw: "[ -d {{ item }} ] || ln -s /tmp {{ item }}"
+    #with_items:
+    #- /vagrant/{{ app_dir }}/frontend/web/assets
+    #- /vagrant/{{ app_dir }}/backend/web/assets
+
+  handlers:
+    - name: restart httpd
+      service: name=httpd enabled=yes state=restarted
+
+    - name: restart mariadb
+      service: name=mariadb enabled=yes state=restarted

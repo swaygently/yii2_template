@@ -1,0 +1,5 @@
+---
+synced_folder: /vagrant
+db_name: yii2advanced
+db_user: app
+db_pass: app

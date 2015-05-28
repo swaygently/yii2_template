@@ -1,0 +1,55 @@
+Alias /frontend {{ synced_folder }}/frontend/web
+Alias /backend {{ synced_folder }}/backend/web
+Alias /api {{ synced_folder }}/api/web
+
+<Directory {{ synced_folder }}/frontend/web/>
+   AddDefaultCharset UTF-8
+   EnableSendfile Off
+
+   <IfModule mod_authz_core.c>
+     # Apache 2.4
+     <RequireAny>
+       Require all granted
+     </RequireAny>
+   </IfModule>
+   <IfModule !mod_authz_core.c>
+     # Apache 2.2
+     Order Allow,Deny
+     Allow from all
+   </IfModule>
+</Directory>
+
+<Directory {{ synced_folder }}/backend/web/>
+   AddDefaultCharset UTF-8
+   EnableSendfile Off
+
+   <IfModule mod_authz_core.c>
+     # Apache 2.4
+     <RequireAny>
+       Require all granted
+     </RequireAny>
+   </IfModule>
+   <IfModule !mod_authz_core.c>
+     # Apache 2.2
+     Order Allow,Deny
+     Allow from all
+   </IfModule>
+</Directory>
+
+<Directory {{ synced_folder }}/api/web/>
+   AddDefaultCharset UTF-8
+   EnableSendfile Off
+   AllowOverride All
+
+   <IfModule mod_authz_core.c>
+     # Apache 2.4
+     <RequireAny>
+       Require all granted
+     </RequireAny>
+   </IfModule>
+   <IfModule !mod_authz_core.c>
+     # Apache 2.2
+     Order Allow,Deny
+     Allow from all
+   </IfModule>
+</Directory>
