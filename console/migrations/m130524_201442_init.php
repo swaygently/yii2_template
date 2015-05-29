@@ -63,7 +63,7 @@ class m130524_201442_init extends Migration
         ], $tableOptions);
          */
 
-        $this->createTable('{{%shop}', [
+        $this->createTable('{{%shop}}', [
             'id' => Schema::TYPE_PK,
             'party_id' => Schema::TYPE_INTEGER,
         ], $tableOptions);

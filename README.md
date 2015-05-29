@@ -95,3 +95,24 @@ the installed application. You only need to do these once for all.
 
 To login into the application, you need to first sign up, with any of your email address, username and password.
 Then, you can login into the application with same email address and password at any time.
+
+
+使用Vagrant构建开发环境
+-----------------------
+
+vagrant up
+
+如果出现错误：Failed to mount folders in Linux guest
+
+vagrant plugin install vagrant-vbguest
+vagrant up
+
+或者先注释掉Vagrantfile里的 :
+config.vm.synced_folder ".", "/vagrant", owner: "apache", group: "apache"
+然后运行 vagrant reload
+
+
+测试环境创建完成后，打开浏览器查看：
+http://192.168.8.11/backend
+http://192.168.8.11/frotend
+http://192.168.8.11/api/v1/users

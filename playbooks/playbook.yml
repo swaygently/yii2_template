@@ -36,22 +36,17 @@
         - php-pecl-memcached
       notify: restart httpd
 
-    - name: check composer
-      command: /usr/local/bin/composer --version
-      register: result_check_composer
-      ignore_errors: True
-
     - name: install composer
-      shell: "{{ item }}"
-      with_items:
-        - curl -sS https://getcomposer.org/installer | php
-        - mv composer.phar /usr/local/bin/composer
-        - /usr/local/bin/composer global require "fxp/composer-asset-plugin:1.0.0"
-      when: result_check_composer|failed
+      shell: curl -sS https://getcomposer.org/installer | php && mv composer.phar /usr/local/bin/composer
+      args:
+        creates: /usr/local/bin/composer
+
+    - name: install composer plugin
+      shell: /usr/local/bin/composer global require "fxp/composer-asset-plugin:1.0.0"
 
     - name: install mariadb server
       yum: name=mariadb-server state=present
-      notify: restart mariadb
+      notify: start mariadb
 
     - name: install phpMyAdmin
       yum: name=phpMyAdmin state=present
@@ -68,16 +63,12 @@
         - create database if not exists `{{ db_name }}` default character set utf8;
         - grant all privileges on `{{ db_name }}`.* to {{ db_user }}@localhost identified by "{{ db_pass }}"; flush privileges;
 
-    # application
-    - name: configure app web
+    - name: configure app
       template: src=templates/yii.conf.j2 dest=/etc/httpd/conf.d/yii.conf
       notify: restart httpd
 
-    #- name: configure app assets dir
-    #raw: "[ -d {{ item }} ] || ln -s /tmp {{ item }}"
-    #with_items:
-    #- /vagrant/{{ app_dir }}/frontend/web/assets
-    #- /vagrant/{{ app_dir }}/backend/web/assets
+    - name: db migrate
+      shell:  "{{ synced_folder }}/yii migrate --migrationPath=@yii/rbac/migrations/ --interactive=0 && {{ synced_folder }}/yii migrate --interactive=0"
 
   handlers:
     - name: restart httpd
@@ -85,3 +76,6 @@
 
     - name: restart mariadb
       service: name=mariadb enabled=yes state=restarted
+
+    - name: start mariadb
+      command: systemctl start mariadb
