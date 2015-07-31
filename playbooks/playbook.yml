@@ -5,7 +5,6 @@
     - vars/main.yml
 
   tasks:
-    # common enviroment
     - name: set timezone
       shell: timedatectl set-timezone Asia/Shanghai
 
@@ -46,16 +45,17 @@
 
     - name: install mariadb server
       yum: name=mariadb-server state=present
-      notify: start mariadb
+      notify: restart mariadb
 
     - name: install phpMyAdmin
       yum: name=phpMyAdmin state=present
 
     - name: configure phpMyAdmin
       template: src=templates/phpMyAdmin.conf dest=/etc/httpd/conf.d/
-      notify:
-        - restart mariadb
-        - restart httpd
+      notify: restart httpd
+
+    - name: Ensure mariadb is started
+      service: name=mariadb state=started enabled=yes
 
     - name: create database
       shell: mysql -uroot -e'{{ item }}'
@@ -63,19 +63,20 @@
         - create database if not exists `{{ db_name }}` default character set utf8;
         - grant all privileges on `{{ db_name }}`.* to {{ db_user }}@localhost identified by "{{ db_pass }}"; flush privileges;
 
+    - name: db migrate
+      shell:  "{{ synced_folder }}/yii migrate --migrationPath=@yii/rbac/migrations/ --interactive=0 && {{ synced_folder }}/yii migrate --interactive=0"
+
     - name: configure app
       template: src=templates/yii.conf.j2 dest=/etc/httpd/conf.d/yii.conf
       notify: restart httpd
 
-    - name: db migrate
-      shell:  "{{ synced_folder }}/yii migrate --migrationPath=@yii/rbac/migrations/ --interactive=0 && {{ synced_folder }}/yii migrate --interactive=0"
+    - name: Ensure httpd is started
+      service: name=httpd state=started enabled=yes
+
 
   handlers:
     - name: restart httpd
       service: name=httpd enabled=yes state=restarted
 
     - name: restart mariadb
-      service: name=mariadb enabled=yes state=restarted
-
-    - name: start mariadb
-      command: systemctl start mariadb
+      service: name=mariadb state=restarted
